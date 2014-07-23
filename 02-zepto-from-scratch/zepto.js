@@ -4,6 +4,7 @@
 var Zepto = (function () {
   var zepto = {},
       emptyArray = [],
+      classCache = {},
       // Q: What do the exclamation point and the caret mean in this regexp?
       fragmentRE = /^\s*<(\w+|!)[^>]*>/,
       // Used for converting self-closing tags (<div/>) into a pair of tags.
@@ -99,6 +100,18 @@ var Zepto = (function () {
       return $.fn.concat.apply([], array);
     } else {
       return array;
+    }
+  }
+
+  function classRE (name) {
+    // Q: could we instead use if (classCache[name])?
+    // Is it faster this way or more reliable?
+    if (name in classCache) {
+      return classCache[name];
+    } else {
+      // We could return the new RegExp instead every time,
+      // but this solution that uses cache is probably more memory-efficient.
+      return classCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)');
     }
   }
 
@@ -270,6 +283,18 @@ var Zepto = (function () {
     return parent !== node && parent.contains(node);
   };
 
+  function funcArg (context, arg, index, payload) {
+    return isFunction(arg) ? arg.call(context, index, payload) : arg;
+  }
+
+  function className(node, value) {
+    if (value === undefined) {
+      return node.className;
+    } else {
+      node.className = value;
+    }
+  }
+
   $.fn = {
     concat: emptyArray.concat,
     find: function (selector) {
@@ -347,6 +372,71 @@ var Zepto = (function () {
       }
       // Making this method chainable.
       return this;
+    },
+    each: function (callback) {
+      // This construct means that we need to execute the callback
+      // on each element of the collection, but if it returns false
+      // for one of the elements, the execution stops.
+      // The method always returns the same collection, unaltered.
+      emptyArray.every.call(this, function (element, index) {
+        return callback.call(element, index, element) !== false;
+      });
+      return this;
+    },
+    hasClass: function (name) {
+      return emptyArray.some.call(this, function (el) {
+        return this.test(className(el));
+      // Array.prototype.some takes an optional second argument
+      // which is the this object inside the callback.
+      // Here it is a regexp like /(^|\s)some-class-name(\s|$)/
+      }, classRE(name));
+    },
+    addClass: function (name) {
+      return this.each(function (index) {
+        classList = [];
+        // Current class of the element.
+        var cls = className(this),
+            // If name is a function, it gets called with (index, cls) parameters.
+            newName = funcArg(this, name, index, cls);
+        newName.split(/\s+/g).forEach(function (klass) {
+          if (!$(this).hasClass(klass)) {
+            classList.push(klass);
+          }
+        }, this);
+        // Otherwise we would add a space to the end of the class list.
+        if (classList.length) {
+          // Using className as a setter to set the element's class name.
+          className(this, cls + (cls ? ' ' : '') + classList.join(' '));
+        }
+      });
+    },
+    removeClass: function (name) {
+      return this.each(function (index) {
+        // Remove all classes if there's no parameter.
+        if (name === undefined) {
+          className(this, '');
+        } else {
+          // Strange that it's not named cls, like in addClass().
+          classList = className(this);
+          funcArg(this, name, index, classList).split(/\s+/g).forEach(function (klass) {
+            classList = classList.replace(classRE(klass), ' ');
+          });
+          className(this, classList.trim());
+        }
+      });
+    },
+    toggleClass: function (name, when) {
+      return this.each(function (index) {
+        var $this = $(this),
+            names = funcArg(this, name, index, className(this));
+        names.split(/\s+/g).forEach(function (klass) {
+          if (when === undefined ? !$this.hasClass(klass) : when) {
+            $this.addClass(klass);
+          } else {
+            $this.removeClass(klass);
+          }
+        });
+      });
     }
   };
 
