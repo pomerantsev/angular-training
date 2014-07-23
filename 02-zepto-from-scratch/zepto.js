@@ -4,6 +4,24 @@
 var Zepto = (function () {
   var zepto = {},
       emptyArray = [],
+      // Q: What do the exclamation point and the caret mean in this regexp?
+      fragmentRE = /^\s*<(\w+|!)[^>]*>/,
+      // Used for converting self-closing tags (<div/>) into a pair of tags.
+      // Q: Same thing here: what does the caret mean?
+      tagExpanderRE = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
+      // special attributes that should be get/set via method calls
+      methodAttributes = ['val', 'css', 'html', 'text', 'data', 'width', 'height', 'offset'],
+      table = document.createElement('table'),
+      tableRow = document.createElement('tr'),
+      containers = {
+        tr: document.createElement('tbody'),
+        tbody: table,
+        thead: table,
+        tfoot: table,
+        td: tableRow,
+        th: tableRow,
+        '*': document.createElement('div')
+      },
       readyRE = /complete|loaded|interactive/,
       class2type = {},
       toString = class2type.toString,
@@ -33,6 +51,10 @@ var Zepto = (function () {
     return type(value) === 'function';
   }
 
+  function isWindow (obj) {
+    return obj != null && obj === obj.window;
+  }
+
   function isDocument (obj) {
     // Simply checking if obj === document doesn't work
     // with iframes (we have several documents).
@@ -42,6 +64,12 @@ var Zepto = (function () {
     // Same thing here: with iframes, checking if
     // obj instanceof Object will yield false negatives.
     return type(obj) === 'object';
+  }
+
+  function isPlainObject (obj) {
+    return isObject(obj) &&
+      !isWindow(obj) &&
+      Object.getPrototypeOf(obj) === Object.prototype;
   }
 
   function likeArray (obj) {
@@ -74,6 +102,42 @@ var Zepto = (function () {
     }
   }
 
+  zepto.fragment = function (html, name, properties) {
+    var dom, nodes, container;
+
+    // Expanding self-closing tags.
+    html.replace(tagExpanderRE, '<$1></$2>');
+
+    if (!(name in containers)) {
+      name = '*';
+    }
+
+    // Placing the element(s) in the correct container (for example,
+    // a <td> cannot have a <div> as a parent - it will be interpreted
+    // as a text node instead of a <td>).
+    container = containers[name];
+    // Here the actual transformation from string to a DOM fragment happens.
+    container.innerHTML = '' + html;
+    // $.each returns the array given to it as the first parameter.
+    // Removing elements from the container probably to prevent memory leaks.
+    dom = $.each(slice.call(container.childNodes), function () {
+      container.removeChild(this);
+    });
+
+    if (isPlainObject(properties)) {
+      nodes = $(dom);
+      $.each(properties, function (key, value) {
+        if (methodAttributes.indexOf(key) > -1) {
+          nodes[key](value);
+        } else {
+          nodes.attr(key, value);
+        }
+      });
+    }
+
+    return dom;
+  };
+
   // This method is responsible for setting the prototype
   // for a dom fragment or an array of nodes to $.fn,
   // and for setting its 'selector' property.
@@ -102,7 +166,13 @@ var Zepto = (function () {
     if (!selector) {
       return zepto.Z();
     } else if (typeof selector === 'string') {
-      if (context !== undefined) {
+      if (selector[0] === '<' && fragmentRE.test(selector)) {
+        // In this case, context is treated as a parameters object:
+        // set any named attributes or special attributes (like val, css...)
+        // on each resultant element.
+        dom = zepto.fragment(selector, RegExp.$1, context);
+        selector = null;
+      } else if (context !== undefined) {
         // Since context might be either a string or an object,
         // we cannot simply call zepto.qsa(context, selector) here.
         return $(context).find(selector);
@@ -126,7 +196,7 @@ var Zepto = (function () {
         dom = [selector];
         selector = null;
       // Q: if selector is neither an array, nor an object, nor a string,
-      // what can it be? A function?
+      // what can it be? A function? A document fragment?
       } else if (context !== undefined) {
         return $(context).find(selector);
       } else {
@@ -166,6 +236,24 @@ var Zepto = (function () {
     // (we need the result of find() to be flattened if the
     // context array contains multiple elements).
     return flatten(values);
+  }
+
+  $.each = function (elements, callback) {
+    var i, key;
+    if (likeArray(elements)) {
+      for (i = 0; i < elements.length; i++) {
+        if (callback.call(elements[i], i, elements[i]) === false) {
+          return elements;
+        }
+      }
+    } else {
+      for (key in elements) {
+        if (callback.call(elements[key], key, elements[key]) === false) {
+          return elements;
+        }
+      }
+    }
+    return elements;
   }
 
   zepto.qsa = function (element, selector) {
@@ -215,6 +303,27 @@ var Zepto = (function () {
         });
       }
       return result;
+    },
+    attr: function (name, value) {
+      // !(1 in arguments) means that value is not given.
+      // Treating method as a getter.
+      if (typeof name === 'string' && !(1 in arguments)) {
+        // Trying to get attr only from the first element in the collection.
+        var element = this[0];
+        if (!this.length || element.nodeType !== 1) {
+          return undefined;
+        } else {
+          var result = element.getAttribute(name);
+          // If attribute with the given name is not set on the element (in html),
+          // then return the object property with the same name
+          // (for example, parentNode).
+          if (!result && name in element) {
+            return element[name];
+          } else {
+            return result;
+          }
+        }
+      }
     },
     map: function (fn) {
       // Supplying the object this method was called on to
