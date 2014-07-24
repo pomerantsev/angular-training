@@ -6,11 +6,12 @@ var Zepto = (function () {
       emptyArray = [],
       classCache = {},
       // Q: What do the exclamation point and the caret mean in this regexp?
+      // A: The exclamation point is the literal exclamation point.
+      // The caret means 'not' if it's the first symbol in [].
       fragmentRE = /^\s*<(\w+|!)[^>]*>/,
       // Used for converting self-closing tags (<div/>) into a pair of tags.
-      // Q: Same thing here: what does the caret mean?
       tagExpanderRE = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
-      // special attributes that should be get/set via method calls
+      // special attributes that should be got/set via method calls
       methodAttributes = ['val', 'css', 'html', 'text', 'data', 'width', 'height', 'offset'],
       table = document.createElement('table'),
       tableRow = document.createElement('tr'),
@@ -81,7 +82,8 @@ var Zepto = (function () {
     // Q: why not call array.filter(function (...) {...}) ?
     // Are we also dealing with some array-like objects here
     // that may have redefined filter() method?
-    return filter.call(array, function (item) {
+    // A: yes, filter may be undefined on array-like objects.
+    return [].filter.call(array, function (item) {
       return item != null;
     });
   }
@@ -106,6 +108,7 @@ var Zepto = (function () {
   function classRE (name) {
     // Q: could we instead use if (classCache[name])?
     // Is it faster this way or more reliable?
+    // A: here, we could use these two interchangeably.
     if (name in classCache) {
       return classCache[name];
     } else {
@@ -209,7 +212,10 @@ var Zepto = (function () {
         dom = [selector];
         selector = null;
       // Q: if selector is neither an array, nor an object, nor a string,
-      // what can it be? A function? A document fragment?
+      // what can it be? A document fragment?
+      // A: this is not clear, but probably the library tries to wrap
+      // anything in a Z object if it can't deal with it otherwise.
+      // Running tests in Zepto doesn't shed the light on this either.
       } else if (context !== undefined) {
         return $(context).find(selector);
       } else {
@@ -275,6 +281,7 @@ var Zepto = (function () {
     } else {
       // Q: why aren't we simply returning element.querySelectorAll(selector) ?
       // Why do we need the returned value to be an instance of Array?
+      // A: probably so.
       return slice.call(element.querySelectorAll(selector));
     }
   };
@@ -302,11 +309,13 @@ var Zepto = (function () {
       // Q: why are we not returning zepto.Z(), but a simple Array?
       // Shouldn't something like $('.class1').find() be chainable
       // for the sake of consistency?
+      // A: ???
       if (!selector) {
         result = [];
       // If the selector is an object or an array.
       // Q: does this mean that we are expecting a single node,
       // an array of nodes, or a zepto.Z object? Can there be anything else?
+      // A: probably so.
       } else if (typeof selector === 'object') {
         result = $(selector).filter(function () {
           var node = this;
