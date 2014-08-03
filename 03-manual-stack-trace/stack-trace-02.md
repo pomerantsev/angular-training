@@ -15,7 +15,7 @@ Where hello is a directive with a template.
       * defined: [`function bootstrap(element, modules, config)`](https://github.com/angular/angular.js/tree/7884c25643bc6c051436a25ce3680f80094b629c/src/Angular.js#L1403)
         * param: `element` === `body` (the element which has the `ng-app` attribute)
         * param: `modules` === `['app']` (an array with one string element - the value of `ng-app` attribute)
-        * param: `config` === `{}` (it could have contained a `strictDi` property if such attribute had been set on the body tag)
+        * param: `config` === `{strictDi: false}`
         * returns: `injector` (an injector that is created for the given set of modules: created by a call to [`function createInjector`](https://github.com/angular/angular.js/tree/7884c25643bc6c051436a25ce3680f80094b629c/src/auto/injector.js#L609)). Not used in this flow.
         * calls: [`compile(element)(scope)`](https://github.com/angular/angular.js/tree/7884c25643bc6c051436a25ce3680f80094b629c/src/Angular.js#L1427)
           * defined: [`function compile($compileNodes, transcludeFn, maxPriority, ignoreDirective, previousCompileContext)`](https://github.com/angular/angular.js/tree/7884c25643bc6c051436a25ce3680f80094b629c/src/ng/compile.js#L854)
@@ -46,7 +46,7 @@ Where hello is a directive with a template.
                         * param: `node` === `body`
                         * param: `directives` === `[]`
                         * param: `value` === `'app'` (the value of `ng-app` attribute)
-                        * param: `name` === `'ng-app'` (the name of the attribute)
+                        * param: `name` === `'ngApp'` (the normalized name of the attribute)
                         * returns: `undefined` (since `$interpolate` doesn't return anything)
                     * calls: [`addDirective(directives, nName, 'A', maxPriority, ignoreDirective, attrStartName, attrEndName)`](https://github.com/angular/angular.js/tree/7884c25643bc6c051436a25ce3680f80094b629c/src/ng/compile.js#L1078-1079)
                       * defined: [`function addDirective(tDirectives, name, location, maxPriority, ignoreDirective, startAttrName, endAttrName)`](https://github.com/angular/angular.js/tree/7884c25643bc6c051436a25ce3680f80094b629c/src/ng/compile.js#L1654)
