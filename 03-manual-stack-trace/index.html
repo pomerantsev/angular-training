@@ -2,8 +2,14 @@
 <head>
   <script src="bower_components/angular/angular.js"></script>
   <script>
-    angular.module('app', []);
+    angular.module('app', [])
+      .directive('hello', function () {
+        return {
+          template: 'Hello!'
+        };
+      });
   </script>
 </head>
 <body ng-app="app">
+  <hello></hello>
 </body>
