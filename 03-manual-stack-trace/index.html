@@ -5,11 +5,12 @@
     angular.module('app', [])
       .directive('hello', function () {
         return {
-          template: 'Hello!'
+          template: '{{message}}',
+          link: function (scope) {
+            scope.message = 'Hello!';
+          }
         };
       });
   </script>
 </head>
-<body ng-app="app">
-  <hello></hello>
-</body>
+<body ng-app="app"><hello></hello></body>
