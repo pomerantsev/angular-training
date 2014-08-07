@@ -3,14 +3,16 @@
   <script src="bower_components/angular/angular.js"></script>
   <script>
     angular.module('app', [])
-      .directive('hello', function () {
+      .directive('transcludeIt', function () {
         return {
-          template: '{{message}}',
-          link: function (scope) {
-            scope.message = 'Hello!';
-          }
+          transclude: true,
+          scope: {},
+          template: '<div ng-transclude></div>'
         };
+      })
+      .run(function ($rootScope) {
+        $rootScope.message = 'Hello!';
       });
   </script>
 </head>
-<body ng-app="app"><hello></hello></body>
+<body ng-app="app"><transclude-it>{{message}}</transclude-it></body>
