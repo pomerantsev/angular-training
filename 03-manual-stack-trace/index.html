@@ -1,18 +1,17 @@
 <!doctype html>
 <head>
   <script src="bower_components/angular/angular.js"></script>
+  <script src="bower_components/angular-route/angular-route.js"></script>
   <script>
-    angular.module('app', [])
-      .directive('transcludeIt', function () {
-        return {
-          transclude: true,
-          scope: {},
-          template: '<div ng-transclude></div>'
-        };
-      })
-      .run(function ($rootScope) {
-        $rootScope.message = 'Hello!';
+    angular.module('app', [
+      'ngRoute'
+    ])
+      .config(function ($routeProvider) {
+        $routeProvider
+          .when('/', {
+            template: 'Hello'
+          });
       });
   </script>
 </head>
-<body ng-app="app"><transclude-it>{{message}}</transclude-it></body>
+<body ng-app="app" ng-view></body>
