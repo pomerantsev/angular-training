@@ -346,6 +346,11 @@ var Zepto = (function () {
       }
       return result;
     },
+    clone: function () {
+      return this.map(function () {
+        return this.cloneNode(true);
+      });
+    },
     attr: function (name, value) {
       // !(1 in arguments) means that value is not given.
       // Treating method as a getter.
@@ -393,6 +398,13 @@ var Zepto = (function () {
       }
       // Making this method chainable.
       return this;
+    },
+    remove: function () {
+      return this.each(function () {
+        if (this.parentNode) {
+          this.parentNode.removeChild(this);
+        }
+      });
     },
     each: function (callback) {
       // This construct means that we need to execute the callback
