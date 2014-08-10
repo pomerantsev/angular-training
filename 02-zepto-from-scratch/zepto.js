@@ -304,6 +304,14 @@ var Zepto = (function () {
 
   $.fn = {
     concat: emptyArray.concat,
+    eq: function (idx) {
+      // Always returns only one element.
+      if (idx === -1) {
+        return this.slice(idx);
+      } else {
+        return this.slice(idx, idx + 1);
+      }
+    },
     find: function (selector) {
       var result, $this = this;
       // Q: why are we not returning zepto.Z(), but a simple Array?
@@ -368,6 +376,10 @@ var Zepto = (function () {
         // Weird, but element and index are swapped here, like in jQuery.
         return fn.call(el, i, el);
       }));
+    },
+    slice: function () {
+      // This version of slice returns a zepto.Z instance.
+      return $(slice.apply(this, arguments));
     },
     ready: function (callback) {
       if (readyRE.test(document.readyState)) {
