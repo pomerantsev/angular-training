@@ -5,6 +5,8 @@ var Zepto = (function () {
   var zepto = {},
       emptyArray = [],
       classCache = {},
+      // CSS properties that accept numbers without units.
+      cssNumber = { 'column-count': 1, 'columns': 1, 'font-weight': 1, 'line-height': 1,'opacity': 1, 'z-index': 1, 'zoom': 1 },
       // Q: What do the exclamation point and the caret mean in this regexp?
       // A: The exclamation point is the literal exclamation point.
       // The caret means 'not' if it's the first symbol in [].
@@ -105,6 +107,21 @@ var Zepto = (function () {
     }
   }
 
+  function camelize (str) {
+    // Regexp means one or several minus signs followed by an optional symbol (any).
+    // This symbol is passed as chr, and if it's present, match (the dash with the symbol)
+    // is replaced to be the uppercased symbol (without the dash).
+    return str.replace(/-+(.)?/g, function (match, chr) {
+      return chr ? chr.toUpperCase() : '';
+    });
+  }
+
+  function dasherize (str) {
+    // Simplifying the original version here.
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2')
+              .toLowerCase();
+  }
+
   function classRE (name) {
     // Q: could we instead use if (classCache[name])?
     // Is it faster this way or more reliable?
@@ -115,6 +132,15 @@ var Zepto = (function () {
       // We could return the new RegExp instead every time,
       // but this solution that uses cache is probably more memory-efficient.
       return classCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)');
+    }
+  }
+
+  function maybeAddPx (name, value) {
+    // Adding px only to values that are required to have units.
+    if (typeof value === 'number' && !cssNumber[dasherize(name)]) {
+      return value + 'px';
+    } else {
+      return value;
     }
   }
 
@@ -415,6 +441,56 @@ var Zepto = (function () {
         return callback.call(element, index, element) !== false;
       });
       return this;
+    },
+    css: function (property, value) {
+      if (arguments.length < 2) {
+        var element = this[0],
+            computedStyle = getComputedStyle(element);
+        if (!element) {
+          return;
+        }
+        // If only one string is passed, it's a getter,
+        // and we're returning a single style, either assigned or computed.
+        if (typeof property === 'string') {
+          return element.style[camelize(property)] || computedStyle.getPropertyValue(property);
+        // If the only argument is an array, it's a getter for an object with styles.
+        } else if (isArray(property)) {
+          var props = {};
+          $.each(property, function (_, prop) {
+            props[prop] = element.style[camelize(prop)] || computedStyle.getPropertyValue(prop);
+          });
+          return props;
+        }
+      }
+
+      var css = '';
+      if (type(property) === 'string') {
+        if (!value && value !== 0) {
+          // If the value is an empty string, remove property.
+          this.each(function () {
+            this.style.removeProperty(dasherize(property));
+          });
+        } else {
+          // Setting the single property.
+          css = dasherize(property) + ':' + maybeAddPx(property, value);
+        }
+      } else {
+        // The first property is an object containing keys and values for setting.
+        for (var key in property) {
+          // Analogous to when type(property) === 'string'.
+          if (!property[key] && property[key] !== 0) {
+            this.each(function () {
+              this.style.removeProperty(dasherize(key));
+            });
+          } else {
+            css += dasherize(key) + ':' + maybeAddPx(key, property[key]) + ';';
+          }
+        }
+      }
+
+      return this.each(function () {
+        this.style.cssText += ';' + css;
+      });
     },
     hasClass: function (name) {
       return emptyArray.some.call(this, function (el) {
