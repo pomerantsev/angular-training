@@ -64,7 +64,7 @@ The html looks like this:
     * calls: `compositeLinkFn(scope, $linkNode, $linkNode)`
       * defined: `function compositeLinkFn(scope, nodeList, $rootElement)`
         * param: `scope` === `$rootScope`
-        * param: `nodeList` and `$rootElement` is a comment (!!!): `'<!-- ngView: -->'`
+        * param: `nodeList` and `$rootElement` is a comment (!!!): `'<!-- ngView: -->'` - it was replaced inside [`applyDirectivesToNode`](https://github.com/angular/angular.js/blob/7884c25643bc6c051436a25ce3680f80094b629c/src/ng/compile.js#L1276-1280)
         * calls: `childBoundTranscludeFn = createBoundTranscludeFn(scope, nodeLinkFn.transclude)`
           * defined: `function createBoundTranscludeFn(scope, transcludeFn)`
             * param: `scope` === `$rootScope`
