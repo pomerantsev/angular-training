@@ -34,6 +34,20 @@ var Zepto = (function () {
       toString = class2type.toString,
       slice = emptyArray.slice,
       filter = emptyArray.filter,
+      propMap = {
+        'tabindex': 'tabIndex',
+        'readonly': 'readOnly',
+        'for': 'htmlFor',
+        'class': 'className',
+        'maxlength': 'maxLength',
+        'cellspacing': 'cellSpacing',
+        'cellpadding': 'cellPadding',
+        'rowspan': 'rowSpan',
+        'colspan': 'colSpan',
+        'usemap': 'useMap',
+        'frameborder': 'frameBorder',
+        'contenteditable': 'contentEditable'
+      },
       isArray = Array.isArray ||
         function (object) {
           return object instanceof Array;
@@ -450,6 +464,16 @@ var Zepto = (function () {
             setAttribute(this, name, funcArg(this, value, idx, this.getAttribute(name)));
           }
         });
+      }
+    },
+    prop: function (name, value) {
+      name = propMap[name] || name;
+      if (1 in arguments) {
+        return this.each(function (idx) {
+          this[name] = funcArg(this, value, idx, this[name]);
+        });
+      } else {
+        return this[0] && this[0][name];
       }
     },
     data: function (name, value) {
