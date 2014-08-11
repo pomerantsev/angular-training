@@ -13,6 +13,9 @@ var Zepto = (function () {
       fragmentRE = /^\s*<(\w+|!)[^>]*>/,
       // Used for converting self-closing tags (<div/>) into a pair of tags.
       tagExpanderRE = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
+      // Not sure why this is here - it's used in the data() method,
+      // where the dasherize() method could be used.
+      capitalRE = /([A-Z])/g,
       // special attributes that should be got/set via method calls
       methodAttributes = ['val', 'css', 'html', 'text', 'data', 'width', 'height', 'offset'],
       table = document.createElement('table'),
@@ -320,11 +323,50 @@ var Zepto = (function () {
     return isFunction(arg) ? arg.call(context, index, payload) : arg;
   }
 
+  function setAttribute (node, name, value) {
+    if (value === null || value === undefined) {
+      node.removeAttribute(name);
+    } else {
+      node.setAttribute(name, value);
+    }
+  }
+
   function className(node, value) {
     if (value === undefined) {
       return node.className;
     } else {
       node.className = value;
+    }
+  }
+
+  // "true"  => true
+  // "false" => false
+  // "null"  => null
+  // "42"    => 42
+  // "42.5"  => 42.5
+  // "08"    => "08"
+  // JSON    => parse if valid
+  // String  => self
+  function deserializeValue (value) {
+    var num;
+    try {
+      if (value === '') {
+        return value;
+      } else if (value === 'true') {
+        return true;
+      } else if (value === 'false') {
+        return false;
+      } else if (value === 'null') {
+        return null;
+      } else if (!/^0/.test(value) && !isNaN(num = Number(value))) {
+        return num;
+      } else if (/^[\[\{]/.test(value)) {
+        return JSON.parse(value);
+      } else {
+        return value;
+      }
+    } catch (e) {
+      return value;
     }
   }
 
@@ -396,6 +438,32 @@ var Zepto = (function () {
             return result;
           }
         }
+      } else {
+        return this.each(function (idx) {
+          if (this.nodeType !== 1) {
+            return;
+          } else if (isObject(name)) {
+            for (var key in name) {
+              setAttribute(this, key, name[key]);
+            }
+          } else {
+            setAttribute(this, name, funcArg(this, value, idx, this.getAttribute(name)));
+          }
+        });
+      }
+    },
+    data: function (name, value) {
+      // A simplified version of dasherize() - probably here
+      // to support data attr names like some_attribute
+      // (dasherize() would not preserve underscores).
+      var attrName = 'data-' + name.replace(capitalRE, '-$1').toLowerCase();
+
+      // If value given.
+      if (1 in arguments) {
+        return this.attr(attrName, value);
+      } else {
+        var data = this.attr(attrName);
+        return data !== null ? deserializeValue(data) : undefined;
       }
     },
     map: function (fn) {
