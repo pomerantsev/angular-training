@@ -466,6 +466,13 @@ var Zepto = (function () {
         });
       }
     },
+    removeAttr: function (name) {
+      return this.each(function () {
+        if (this.nodeType === 1) {
+          setAttribute(this, name);
+        }
+      });
+    },
     prop: function (name, value) {
       name = propMap[name] || name;
       if (1 in arguments) {
@@ -489,6 +496,10 @@ var Zepto = (function () {
         var data = this.attr(attrName);
         return data !== null ? deserializeValue(data) : undefined;
       }
+    },
+    removeData: function (name) {
+      var attrName = 'data-' + name.replace(capitalRE, '-$1').toLowerCase();
+      return this.removeAttr(attrName);
     },
     map: function (fn) {
       // Supplying the object this method was called on to
