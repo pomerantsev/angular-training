@@ -6,7 +6,7 @@ function render(template){
   var interpolatedTokens = [],
       stringTokens = [],
       match,
-      re = /{{([^}}]*)}}/g,
+      re = /{{(.*?)}}/g,
       lastIndex = 0;
   while (match = re.exec(template)) {
     stringTokens.push(template.slice(lastIndex, match.index));
