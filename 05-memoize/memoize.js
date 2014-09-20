@@ -40,6 +40,9 @@ var assertions = [
     // Third call with a different argument
     assert.equal(memoizedFunc(2), 4);
     assert.equal(counter, 2);
+
+    assert.equal(memoizedFunc.cache['1'], 2);
+    assert.equal(memoizedFunc.cache['2'], 4);
   },
   function () {
     // It treats strings and integers as the same argument
@@ -57,6 +60,8 @@ var assertions = [
     assert.equal(memoizedFunc('1'), 2);
 
     assert.equal(counter, 1);
+
+    assert.equal(memoizedFunc.cache['1'], 2);
   }
 ];
 
