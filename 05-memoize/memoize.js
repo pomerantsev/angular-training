@@ -1,19 +1,16 @@
 var assert = require('assert');
 
-var memoizeCache = {};
-
 var memoize = function (func) {
-  var key = func.toString();
-  memoizeCache[key] = memoizeCache[key] || {};
-
-  return function () {
-    if (memoizeCache[key].hasOwnProperty(arguments[0])) {
-      return memoizeCache[key][arguments[0]];
+  var memoized = function () {
+    if (memoized.cache.hasOwnProperty(arguments[0])) {
+      return memoized.cache[arguments[0]];
     } else {
-      var result = memoizeCache[key][arguments[0]] = func.apply(null, arguments);
+      var result = memoized.cache[arguments[0]] = func.apply(null, arguments);
       return result;
     }
   };
+  memoized.cache = {};
+  return memoized;
 };
 
 
