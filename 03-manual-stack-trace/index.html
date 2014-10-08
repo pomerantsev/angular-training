@@ -1,17 +1,33 @@
 <!doctype html>
 <head>
+  <style>
+    .disappearing-div {
+      transition: 1s linear all;
+    }
+    .disappearing-div.ng-enter {
+      opacity: 0;
+    }
+    .disappearing-div.ng-enter.ng-enter-active {
+      opacity: 1;
+    }
+    .disappearing-div.ng-leave.ng-leave-active {
+      opacity: 0;
+    }
+  </style>
   <script src="bower_components/angular/angular.js"></script>
-  <script src="bower_components/angular-route/angular-route.js"></script>
+  <script src="bower_components/angular-animate/angular-animate.js"></script>
   <script>
     angular.module('app', [
-      'ngRoute'
-    ])
-      .config(function ($routeProvider) {
-        $routeProvider
-          .when('/', {
-            template: 'Hello'
-          });
-      });
+      'ngAnimate'
+    ]);
   </script>
 </head>
-<body ng-app="app" ng-view></body>
+<body ng-app="app">
+  <div>
+    <a href ng-click="displayElement = !displayElement">Show / hide</a>
+  </div>
+  <div class="disappearing-div"
+       style="width: 100px; height: 100px; background-color: black;"
+       ng-if="displayElement">
+  </div>
+</body>
