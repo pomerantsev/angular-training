@@ -2,13 +2,10 @@
 <head>
   <style>
     .disappearing-div {
-      transition: 1s linear all;
-    }
-    .disappearing-div.ng-enter {
-      opacity: 0;
-    }
-    .disappearing-div.ng-enter.ng-enter-active {
-      opacity: 1;
+      width: 100px;
+      height: 100px;
+      background-color: black;
+      transition: 5s linear all;
     }
     .disappearing-div.ng-leave.ng-leave-active {
       opacity: 0;
@@ -19,15 +16,22 @@
   <script>
     angular.module('app', [
       'ngAnimate'
-    ]);
+    ]).run(function ($rootScope, $animate) {
+      var element = angular.element(document.querySelector('.disappearing-div')),
+          currentAnimation;
+      $rootScope.hide = function () {
+        currentAnimation = $animate.leave(element);
+      };
+      $rootScope.cancelAnimation = function () {
+        if (currentAnimation) {
+          $animate.cancel(currentAnimation);
+        }
+      };
+    });
   </script>
 </head>
 <body ng-app="app">
-  <div>
-    <a href ng-click="displayElement = !displayElement">Show / hide</a>
-  </div>
-  <div class="disappearing-div"
-       style="width: 100px; height: 100px; background-color: black;"
-       ng-if="displayElement">
-  </div>
+  <div><a href ng-click="hide()">Hide</a></div>
+  <div class="disappearing-div"></div>
+  <div><a href ng-click="cancelAnimation()">Cancel Animation</a></div>
 </body>
